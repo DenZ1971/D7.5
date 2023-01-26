@@ -5,9 +5,12 @@ from .forms import PostForm
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404, render
 from django import *
 from django.contrib.auth.models import User, Group
+from django.views.decorators.csrf import csrf_protect
+from django.db.models import Exists, OuterRef
+
 
 
 class PostsList(ListView):
@@ -40,7 +43,7 @@ class PostsList(ListView):
         context = super().get_context_data(**kwargs)
         # Добавляем в контекст объект фильтрации.
         context['filterset'] = self.filterset
-        #context['is_author'] = self.request.user.groups.filter(name='author')
+
         return context
 
 
@@ -57,8 +60,6 @@ class PostDetail(DetailView):
 
 
 
-
-
 class PostCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     permission_required = ('news.add_post',)
     raise_exception = True
@@ -68,6 +69,13 @@ class PostCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Post
     # и новый шаблон, в котором используется форма.
     template_name = 'post_create.html'
+    success_url = reverse_lazy('post_list')
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user.author
+        return super().form_valid(form)
+
+
 
 
 class PostUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
@@ -76,11 +84,8 @@ class PostUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     form_class = PostForm
     model = Post
     template_name = 'post_create.html'
+    success_url = reverse_lazy('post_list')
 
-    #def has_permission(self):
-        #if self.request.user.author != self.get_object().author:
-            #return False
-        #return True
 
 
 
@@ -102,3 +107,39 @@ def upgrade_user(request):
             Author.objects.create(authorUser=User.objects.get(pk=user.id))
     return redirect('post_create')
 
+
+class CategoryList(ListView):
+    model = Post
+    template_name = 'category.html'
+    context_object_name = 'category_list'
+
+    def get_queryset(self):
+        self.postCategory = get_object_or_404(Category, id=self.kwargs['pk'])
+        queryset = Post.objects.filter(postCategory=self.postCategory).order_by('-timeCreation')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        #context['is_not_subscriber'] = self.request.user not in self.postCategory.subscribers.all()
+        context['category'] = self.postCategory
+        return context
+@login_required
+def subscribe(request, pk):
+    user = request.user
+    category = Category.objects.get(id=pk)
+    category.subscribers.add(user)
+
+    message = 'Вы успешно подписались на рассылку новостей категории'
+    return render(request,'subscribe.html', {'category': category, 'message': message})
+
+
+@login_required
+def unsubscribe(request, pk):
+    user = request.user
+    category = Category.objects.get(id=pk)
+    if user in category.subscribers.all():
+        category.subscribers.remove(user)
+
+
+    message = 'Вы успешно oтписались от рассылки новостей категории'
+    return render(request,'subscribe.html', {'category': category, 'message': message})

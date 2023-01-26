@@ -25,12 +25,15 @@ class Author(models.Model):
         self.ratingAuthor = pRat * 3 + cRat + cpRat
         self.save()
 
+    def __str__(self):
+        return self.authorUser
 
 
 
 
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
+    subscribers = models.ManyToManyField(User, related_name='categories')
 
     def __str__(self):
         return self.name
@@ -63,13 +66,19 @@ class Post(models.Model):
     def preview(self):
         return self.text[0:123] + '...'
 
+    def __str__(self):
+        return f'{self.title} | {self.author}'
+
     def get_absolute_url(self):
-        return reverse('post_list', args=[])
+        return reverse('post_detail', kwargs={'pk': self.pk})
 
 
 class PostCategory(models.Model):
     postThrough = models.ForeignKey(Post, on_delete=models.CASCADE)
     categoryThrough = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.post.title} | {self.category.name}'
 
 
 class Comment(models.Model):
@@ -86,3 +95,4 @@ class Comment(models.Model):
     def dislike(self):
         self.rating -= 1
         self.save()
+

@@ -4,10 +4,18 @@
 {% load custom_tags %}
 
 {% block title %}
-News
+News by category
 {% endblock title %}
 
 {% block content %}
+
+
+{% if user not in category.subscribers.all %}
+<p class='text-center'><a href="{% url 'subscribe' category.id %}"class=btn btn-secondary btn-sn">Подписаться</a></p>
+{% endif %}
+{% if user in category.subscribers.all %}
+<p class='text-center'><a href="{% url 'unsubscribe' category.id %}"class=btn btn-secondary btn-sn">Отписаться</a></p>
+{% endif %}
 {% if user.is_authenticated == False %}
 <a href="/accounts/login">LogIn</a> <a href="/accounts/signup">SignUp</a>
 {% endif %}
@@ -18,30 +26,30 @@ News
 <a href="{% url 'post_create' %}">Создать публикацию</a>
 <h2><a href="{% url 'post_list' %}">Все публикации</a></h2>
 <hr>
-<h4>Поиск по публикациям</h4>
-<form action="" method="get">
-       {# Переменная, которую мы передали через контекст, может сгенерировать нам форму с полями #}
-       {{ filterset.form.as_p }}
-       {# Добавим кнопку отправки данных формы #}
-       <input type="submit" value="Найти" />
-   </form>
-<hr>
-
 
 <ul class="list-group list-group-flush">
-  {% for post in posts %}
+  {% for post in category_list %}
     <li class="list-group-item">
       <small class="fw-bold">{{post.timeCreation|date:'d M Y' }} </small>
       <a href={{ post.get_absolute_url }}><h2>{{post.title|censor}}</h2></a>
       <small class="text-muted">(автор: {{post.author.authorUser}})</small><br>
       <small class="fw-bold">категории:
         {% for category in post.postCategory.all %}
-             <a href="{% url 'category_list' category.id %}"> {{category.name}} </a>
+            <a href="{% url 'category_list' category.id %}"> {{category}} </a>
+            {% if user not in category.subscribers.all %}
+<a href="{% url 'subscribe' category.id %}"class=btn btn-secondary btn-sn">Подписаться</a>
+{% endif %}
+{% if user in category.subscribers.all %}
+<a href="{% url 'unsubscribe' category.id %}"class=btn btn-secondary btn-sn">Отписаться</a>
+{% endif %}
         {% endfor %}
       </small>
-      <p>{{post.text|truncatechars:25|censor}}</p>
+
+      <p>{{post.text|truncatechars:15|censor}}</p>
   </li>
   {% endfor %}
+</ul>
+
 
 {% if page_obj.has_previous %}
        {# Для каждой ссылки пагинации указываем обработку через новый тег #}

@@ -8,7 +8,7 @@ class SignUp(CreateView):
     raise_exception = True
     model = User
     form_class = SignUpForm
-    success_url = '/accounts/login'
+    success_url = 'SITE_URL/news/'
 
     template_name = 'registration/signup.html'
 

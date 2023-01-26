@@ -8,8 +8,16 @@ Post
 
 
 {% block content %}
+<h2><a href="{% url 'post_list' %}">Все публикации</a></h2>
+<hr>
 <h2>{{ post.title|censor }}</h2>
 <h5>{{ post.timeCreation|date:'d M Y' }}</h5>
+<h5>{{ post.author.authorUser}}</h5>
+<small class="fw-bold">категории:
+        {% for category in post.postCategory.all %}
+             {{category.name}}
+        {% endfor %}
+      </small>
 <article>{{ post.text|censor }}</article>
 
 
