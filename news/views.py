@@ -10,6 +10,9 @@ from django import *
 from django.contrib.auth.models import User, Group
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Exists, OuterRef
+from django.http import HttpResponse
+from django.views import View
+
 
 
 
@@ -70,6 +73,7 @@ class PostCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     # и новый шаблон, в котором используется форма.
     template_name = 'post_create.html'
     success_url = reverse_lazy('post_list')
+
 
     def form_valid(self, form):
         form.instance.author = self.request.user.author
@@ -143,3 +147,6 @@ def unsubscribe(request, pk):
 
     message = 'Вы успешно oтписались от рассылки новостей категории'
     return render(request,'subscribe.html', {'category': category, 'message': message})
+
+
+
